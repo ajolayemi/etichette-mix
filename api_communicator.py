@@ -26,12 +26,19 @@ WRITING_RANGE_NAME = json_file_content.get('wb_range_to_write')
 FILE_RANGE_TO_CLEAR = json_file_content.get('wb_range_to_clear')
 
 
-def main():
+def api_communicator():
     # Create the service that will be used
     service = build('sheets', 'v4', credentials=creds)
 
     # Call the Google Sheets API
     sheet = service.spreadsheets()
+
+    # Clear existing data in spreadsheet cells where new data will be written
+    # To learn more about this, check Google Sheets API reference docs
+    clear_data_request = service.spreadsheets().values().batchClear(spreadsheetId=SPREADSHEET_ID,
+                                                                    body={'ranges': FILE_RANGE_TO_CLEAR})
+    clear_data_request.execute()
+
     sheet_values = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
                                       range=READING_RANGE).execute()
 
@@ -46,13 +53,6 @@ def main():
     sorted_values = sorted(all_values, key=lambda x: (x[2], x[1]), reverse=True)
 
     sorted_values_len = len(sorted_values)
-
-    # Clear existing data in spreadsheet
-
-    # To learn more about this, check Google Sheets API reference docs
-    clear_data_request = service.spreadsheets().values().batchClear(spreadsheetId=SPREADSHEET_ID,
-                                                                    body={'ranges': FILE_RANGE_TO_CLEAR})
-    clear_data_request.execute()
 
     current_row = 2
     final_data = []
@@ -76,14 +76,14 @@ def main():
         else:
             final_data.append(sorted_values[current_index])
 
-    request = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,
-                                                     range=f'{WRITING_RANGE_NAME}{current_row}',
-                                                     valueInputOption='USER_ENTERED',
-                                                     insertDataOption='OVERWRITE',
-                                                     body={'values': final_data})
-    response = request.execute()
-    print(response)
+    write_data_request = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,
+                                                                range=f'{WRITING_RANGE_NAME}{current_row}',
+                                                                valueInputOption='USER_ENTERED',
+                                                                insertDataOption='OVERWRITE',
+                                                                body={'values': final_data})
+    response = write_data_request.execute()
+    return response
 
 
 if __name__ == '__main__':
-    main()
+    api_communicator()
