@@ -20,11 +20,10 @@ creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
 # The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = '1kbIYKsooISlbAsKxgHYLQzzWeTKcT6LpE__1ReSzkA4'
-READING_RANGE_NAME = 'IMPORT X STAMPA!A:C'
-WRITING_RANGE_NAME = 'IMPORT X STAMPA!J'
-
-FILE_RANGE_TO_CLEAR = 'IMPORT X STAMPA!J2:L1000'
+SPREADSHEET_ID = json_file_content.get('google_sheet_id')
+READING_RANGE = json_file_content.get('wb_range_to_read')
+WRITING_RANGE_NAME = json_file_content.get('wb_range_to_write')
+FILE_RANGE_TO_CLEAR = json_file_content.get('wb_range_to_clear')
 
 
 def main():
@@ -33,8 +32,8 @@ def main():
 
     # Call the Google Sheets API
     sheet = service.spreadsheets()
-    sheet_values = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                      range=READING_RANGE_NAME).execute()
+    sheet_values = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
+                                      range=READING_RANGE).execute()
 
     # The returned sheet value will be a nested list
     # The first value in a list is the label's content
@@ -51,33 +50,33 @@ def main():
     # Clear existing data in spreadsheet
 
     # To learn more about this, check Google Sheets API reference docs
-    clear_data_request = service.spreadsheets().values().batchClear(spreadsheetId=SAMPLE_SPREADSHEET_ID,
+    clear_data_request = service.spreadsheets().values().batchClear(spreadsheetId=SPREADSHEET_ID,
                                                                     body={'ranges': FILE_RANGE_TO_CLEAR})
     clear_data_request.execute()
 
     current_row = 2
     final_data = []
-    for test in range(sorted_values_len):
-        if test == 0:
+    for current_index in range(sorted_values_len):
+        if current_index == 0:
             final_data.append([sorted_values[0][2]])
-            final_data.append(sorted_values[test])
+            final_data.append(sorted_values[current_index])
 
-        elif test == sorted_values_len - 1:
-            final_data.append(sorted_values[test])
-            final_data.append([sorted_values[test][2]])
+        elif current_index == sorted_values_len - 1:
+            final_data.append(sorted_values[current_index])
+            final_data.append([sorted_values[current_index][2]])
 
-        elif sorted_values[test][2] != sorted_values[test + 1][2]:
+        elif sorted_values[current_index][2] != sorted_values[current_index + 1][2]:
             # First append the current label content
-            final_data.append(sorted_values[test])
+            final_data.append(sorted_values[current_index])
             # Then append the current producer
-            final_data.append([sorted_values[test][2]])
+            final_data.append([sorted_values[current_index][2]])
             # Then append the next producer
-            final_data.append([sorted_values[test + 1][2]])
+            final_data.append([sorted_values[current_index + 1][2]])
 
         else:
-            final_data.append(sorted_values[test])
+            final_data.append(sorted_values[current_index])
 
-    request = service.spreadsheets().values().append(spreadsheetId=SAMPLE_SPREADSHEET_ID,
+    request = service.spreadsheets().values().append(spreadsheetId=SPREADSHEET_ID,
                                                      range=f'{WRITING_RANGE_NAME}{current_row}',
                                                      valueInputOption='USER_ENTERED',
                                                      insertDataOption='OVERWRITE',
