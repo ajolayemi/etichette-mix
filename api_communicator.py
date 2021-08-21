@@ -105,4 +105,4 @@ class WorkerThread(QObject):
 
 
 if __name__ == '__main__':
-    WorkerThread().api_communicator()
+    pass
