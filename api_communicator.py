@@ -1,8 +1,12 @@
 #!usr/bin/env python
 
+""" Handles the part of this algorithm that makes use of Google Sheets API. """
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+
+# helper_modules is a self defined module
+from helper_modules import helper_functions
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SERVICE_ACCOUNT_FILE = 'api_key.json'
