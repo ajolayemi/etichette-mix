@@ -8,8 +8,11 @@ from googleapiclient.discovery import build
 # helper_modules is a self defined module
 from helper_modules import helper_functions
 
+JSON_FILE_NAME = 'g_sheet_info.json'
+
+json_file_content = helper_functions.json_file_loader(file_name=JSON_FILE_NAME)
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SERVICE_ACCOUNT_FILE = 'api_key.json'
+SERVICE_ACCOUNT_FILE = json_file_content.get('api_key_file')
 
 
 # Using the imported service_account module, new creds are generated.
