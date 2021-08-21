@@ -17,13 +17,7 @@ MSG_BOX_FONT = QFont('Italics', 13)
 BUTTONS_FONT = QFont('Times', 13)
 SHEET_JSON_FILE = 'g_sheet_info.json'
 
-
-def json_reader():
-    with open(SHEET_JSON_FILE) as json_file:
-        return json.load(json_file)
-
-
-json_file_content = json_reader()
+json_file_content = helper_functions.json_file_loader(file_name=SHEET_JSON_FILE)
 
 
 class MixWindow(QMainWindow):
