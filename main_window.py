@@ -2,16 +2,17 @@
 
 """ App's main GUI window. """
 
-import json
 import sys
-from PyQt5.QtGui import QFont
 
+from PyQt5.QtCore import QThread
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (QMainWindow, QWidget,
                              QVBoxLayout, QApplication,
                              QLabel, QPushButton, QFormLayout,
                              QMessageBox)
-
 from helper_modules import helper_functions
+
+from api_communicator import WorkerThread
 
 MSG_BOX_FONT = QFont('Italics', 13)
 BUTTONS_FONT = QFont('Times', 13)
@@ -37,6 +38,61 @@ class MixWindow(QMainWindow):
 
     def _create_btns_connection(self):
         self.close_win_btn.clicked.connect(self._close_btn_responder)
+        self.generate_man_btn.clicked.connect(self._threadManager)
+
+    def _threadManager(self):
+        """ Manages the WorkerThread used in this algorithm.
+        This thread is used when user clicks on Generare Manuale button. """
+
+        self._label_thread = QThread()
+        self._worker_thread = WorkerThread()
+        # Move the worker thread to a separate thread
+        self._worker_thread.moveToThread(self._label_thread)
+
+        # Connect thread to the method that communicates with Google sheets
+        self._label_thread.started.connect(self._worker_thread.api_communicator)
+
+        # Update app's states
+        self._worker_thread.progress.connect(self._updateAppStateWhileBusy)
+        self._worker_thread.finished.connect(self._updateAppStateWhileDone)
+        self._worker_thread.unfinished.connect(self._updateAppStateWhileDone)
+        self._worker_thread.finished.connect(self._communicateSuccess)
+        self._worker_thread.unfinished.connect(self._communicateFailure)
+
+        # Clean up after the operation is completed
+        self._worker_thread.finished.connect(self._label_thread.quit)
+        self._worker_thread.unfinished.connect(self._label_thread.quit)
+        self._worker_thread.finished.connect(self._label_thread.deleteLater)
+        self._worker_thread.unfinished.connect(self._label_thread.deleteLater)
+
+        # Run the thread
+        self._label_thread.start()
+
+    def _communicateFailure(self):
+        """ Communicates to user if the generation of manual operation failed. """
+        helper_functions.output_communicator(
+            msg_box_font=MSG_BOX_FONT,
+            window_title=json_file_content.get('window_title', 'MIX'),
+            output_type=False,
+            button_pressed=self.generate_man_btn.text(),
+        )
+
+    def _communicateSuccess(self):
+        """ Communicates to user the successful generation of manual. """
+        helper_functions.output_communicator(msg_box_font=MSG_BOX_FONT,
+                                             window_title=json_file_content.get('window_title', 'MIX'),
+                                             output_type=True,
+                                             button_pressed=self.generate_man_btn.text())
+
+    def _updateAppStateWhileDone(self):
+        """ Updates the app's GUI state after it's done generating manual. """
+        self.generate_man_btn.setEnabled(True)
+        self.close_win_btn.setEnabled(True)
+
+    def _updateAppStateWhileBusy(self):
+        """ Updates the app's GUI state while it is busy blocking some buttons. """
+        self.generate_man_btn.setEnabled(False)
+        self.close_win_btn.setEnabled(False)
 
     def _close_btn_responder(self):
         user_choice = helper_functions.ask_before_close(
