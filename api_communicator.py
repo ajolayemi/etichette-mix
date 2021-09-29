@@ -63,7 +63,7 @@ class WorkerThread(QObject):
 
             all_values = sheet_values.get('values', [])[1:]
 
-            sorted_values = sorted(all_values, key=lambda x: (x[2], x[1]), reverse=True)
+            sorted_values = sorted(all_values, key=lambda x:  x[2], reverse=True)
 
             sorted_values_len = len(sorted_values)
 
